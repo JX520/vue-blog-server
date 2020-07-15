@@ -14,7 +14,7 @@ router.get('/article', (req, res, next) => {
 		
 		Article.find({}).skip(page).limit(pageSize).exec((findErr, findDoc) => {
 			if (findDoc) {
-				Article.count().exec((err, count) => {
+				Article.countDocuments().exec((err, count) => {
 					return res.json({
 						code: 0,
 						msg: '文章获取成功！',

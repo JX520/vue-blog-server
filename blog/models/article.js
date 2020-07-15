@@ -9,6 +9,7 @@ var articleSchema = new Schema({
 	"catrgory":String,
 	"lables":Array,
 	"likeNum":Number,
+	"reviewNum":Number,
 	"review":[
 		{
 			"userName":String,

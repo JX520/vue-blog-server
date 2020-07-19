@@ -35,7 +35,7 @@ router.post('/adminLogin',(req,res,next)=>{
 	}else{
 		// 管理员登录 
 		User.findOne({user:info.user,type:0},(loginErr,loginDoc)=>{
-			 console.log(loginDoc);
+			 // console.log(loginDoc);
 			if(loginDoc){
 				if(loginDoc.pwd == info.pwd){
 					return res.json({

@@ -6,10 +6,12 @@ var articleSchema = new Schema({
 	"title":String,
 	"brief":String,
 	"publishTime":String,
-	"catrgory":String,
+	"updateTime":String,
+	"category":String,
 	"lables":Array,
 	"likeNum":Number,
 	"reviewNum":Number,
+	"detail":String,
 	"review":[
 		{
 			"userName":String,

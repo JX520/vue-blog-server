@@ -1,7 +1,9 @@
 var express = require('express');
 var router = express.Router();
 var mongoose = require('mongoose');
-
+var moment = require('moment');
+require('moment/locale/zh-cn')
+moment.locale('zh-cn'); 
 var Article = require('../models/article.js')
 
 
@@ -51,10 +53,119 @@ router.get('/article', (req, res, next) => {
 		})
 	}
 	
+})
+
+//搜索文章
+router.get('/search',(req,res,next)=>{
+	let search = req.body;
+	let page = req.query.page;
+	const pageSize = 4;
+	page = (page - 1) * pageSize;
+	if(search.title && search.category){
+		Article.find({title:search.title,category:search.category}).skip(page).limit(pageSize).exec((allErr,allDoc)=>{
+			if(allDoc){
+				res.json({
+					code:0,
+					msg:'搜索成功！',
+					result:allDoc
+				})
+			}else{
+				res.json({
+					code:1,
+					msg:'暂无该文章！',
+					result:allErr
+				})
+			}
+		})
+	}
+	//标题搜索
+	else if(search.title){
+		Article.find({title:search.title}).skip(page).limit(pageSize).exec((allErr,allDoc)=>{
+			if(allDoc){
+				res.json({
+					code:0,
+					msg:'搜索成功！',
+					result:allDoc
+				})
+			}else{
+				res.json({
+					code:1,
+					msg:'暂无该文章！',
+					result:allErr
+				})
+			}
+		})
+	}
+	//分类搜索
+	else if(search.category){
+		Article.find({category:search.category}).skip(page).limit(pageSize).exec((allErr,allDoc)=>{
+			if(allDoc){
+				res.json({
+					code:0,
+					msg:'搜索成功！',
+					result:allDoc
+				})
+			}else{
+				res.json({
+					code:1,
+					msg:'暂无该文章！',
+					result:allErr
+				})
+			}
+		})
+	}
+})
+
+//发布文章
+router.post('/publish',(req,res,next)=>{
+	let article = req.body;
+	var publishTime = moment().format('YYYY-MM-DD HH:mm:ss');
+	// console.log(publishTime);
+	article.publishTime = publishTime;
+	article.likeNum = 0;
+	article.reviewNum = 0;
+	article.watchNum = 0;
+	article.updateTime = '',
+	Article.create(article,(Aerr,doc)=>{
+		if(Aerr){
+			return res.json({
+				code:0,
+				msg:'发表成功!',
+				result:''
+			})
+		}else{
+			return res.json({
+				code:1,
+				msg:'发表失败!',
+				result:Aerr
+			})
+		}
+	})
+})
 
 
-
-
+//编辑文章
+router.post('/edit',(req,res,next)=>{
+	let article = req.body;
+	var updateTime = moment().format('YYYY-MM-DD HH:mm:ss');
+	article.updateTime = updateTime;
+	Article.updateOne({_id:article._id},{
+		$set:article,
+		},(Eerr,doc)=>{
+		if(Eerr){
+			return res.json({
+				code:0,
+				msg:'编辑成功!',
+				result:''
+			})
+		}else{
+			return res.json({
+				code:1,
+				msg:'编辑失败!',
+				result:Eerr
+			})
+		}
+	})
 })
 
 module.exports = router;

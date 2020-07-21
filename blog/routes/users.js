@@ -3,7 +3,7 @@ var router = express.Router();
 var mongoose = require('mongoose');
 var emailSend = require('../utils/sendMail.js');
 var User = require('../models/user.js');
-
+var JWT = require('../utils/jsonwebtoken.js');
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
@@ -15,15 +15,22 @@ router.get('/', function(req, res, next) {
 router.post('/adminLogin',(req,res,next)=>{
 	var info = req.body;
 	//用户注册
-	info.type = 1;
+	
 	if(info.mail){
+		info.type = 1;
 		User.create(info,(inErr,inDoc)=>{
 			if(inDoc){
+				//注册成功，生成token传回前端
+				let token = JWT.creatToken({
+					user:info.user,
+					login:true
+				});
 				return res.json({
 					code:0,
-					msg:'注册成功!',
-					result:''
-				})
+					msg:'登录成功！',
+					result:	info,
+					token:token
+				});	
 			}else{
 				return res.json({
 					code:1,
@@ -38,10 +45,16 @@ router.post('/adminLogin',(req,res,next)=>{
 			 // console.log(loginDoc);
 			if(loginDoc){
 				if(loginDoc.pwd == info.pwd){
+					//登录成功，生成token传回前端
+					let token = JWT.creatToken({
+						user:info.user,
+						login:true
+					});
 					return res.json({
 						code:0,
 						msg:'登录成功！',
-						result:	''
+						result:	loginDoc,
+						token:token
 					});	
 				}else{
 					return res.json({

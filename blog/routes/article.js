@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var mongoose = require('mongoose');
+var urlencode = require('urlencode');
 var moment = require('moment');
 require('moment/locale/zh-cn')
 moment.locale('zh-cn'); 
@@ -57,18 +58,22 @@ router.get('/article', (req, res, next) => {
 
 //搜索文章
 router.get('/search',(req,res,next)=>{
-	let search = req.body;
+	let search = req.query;
+	var title = urlencode.decode(search.title, 'utf-8');
+	var Title= new RegExp(title, 'i');//标题模糊查询
+	console.log(title);
 	let page = req.query.page;
 	const pageSize = 4;
 	page = (page - 1) * pageSize;
 	if(search.title && search.category){
-		Article.find({title:search.title,category:search.category}).skip(page).limit(pageSize).exec((allErr,allDoc)=>{
+		Article.find({category:search.category,$or:[{title:Title}]}).skip(page).limit(pageSize).exec((allErr,allDoc)=>{
 			if(allDoc){
 				res.json({
 					code:0,
 					msg:'搜索成功！',
-					result:allDoc
-				})
+					result:allDoc,
+					count: allDoc.length,
+				});
 			}else{
 				res.json({
 					code:1,
@@ -80,13 +85,14 @@ router.get('/search',(req,res,next)=>{
 	}
 	//标题搜索
 	else if(search.title){
-		Article.find({title:search.title}).skip(page).limit(pageSize).exec((allErr,allDoc)=>{
+		Article.find({$or:[{title:Title}]}).skip(page).limit(pageSize).exec((allErr,allDoc)=>{
 			if(allDoc){
 				res.json({
 					code:0,
 					msg:'搜索成功！',
-					result:allDoc
-				})
+					result:allDoc,
+					count: allDoc.length,
+				});
 			}else{
 				res.json({
 					code:1,
@@ -103,8 +109,9 @@ router.get('/search',(req,res,next)=>{
 				res.json({
 					code:0,
 					msg:'搜索成功！',
-					result:allDoc
-				})
+					result:allDoc,
+					count: allDoc.length,
+				});
 			}else{
 				res.json({
 					code:1,

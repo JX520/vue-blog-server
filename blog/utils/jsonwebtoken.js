@@ -9,11 +9,11 @@ function verifyToken(token){
 	return new Promise ((resolve,reject)=>{
 		JWT.verify(token,secret,(err,data)=>{
 			if(err)reject({
-				err:1,
+				code:1,
 				msg:'无效的token'
 			});
 			else resolve({
-				err:0,
+				code:0,
 				token:data
 			})
 		})

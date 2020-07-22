@@ -96,6 +96,33 @@ router.post('/sendEmail',(req,res)=>{
 	})
 })
 
+//验证token是否有效
+router.post('/validToken',(req,res)=>{
+	var token = req.body.token;
+	JWT.verifyToken(token)
+	.then(data=>{
+		console.log(data);
+		return res.json({
+			code:0,
+			msg:'token有效',
+		})
+	})
+	.catch(err=>{
+		console.log(err);
+		if(err.name === 'TokenExpiredError'){
+			return res.json({
+				code:1,
+				msg:'token已过期,请重新登录!'
+			})
+		}else{
+			return res.json({
+				code:2,
+				msg:'非法的token!'
+			})
+		}
+	})
+})
+
 
 //用户注册登陆
 router.post('/login',(req,res,next)=>{

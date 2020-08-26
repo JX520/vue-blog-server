@@ -14,9 +14,10 @@ router.get('/', function(req, res, next) {
 //type=1 为普通用户
 router.post('/adminLogin',(req,res,next)=>{
 	var info = req.body;
+
 	//用户注册
-	
-	if(info.mail){
+	console.log(info);
+	if(info.flag == 'register'){
 		info.type = 1;
 		User.create(info,(inErr,inDoc)=>{
 			if(inDoc){
@@ -39,7 +40,7 @@ router.post('/adminLogin',(req,res,next)=>{
 				})
 			}
 		})
-	}else{
+	}else if(info.flag == 'aLogin'){
 		// 管理员登录 
 		User.findOne({user:info.user,type:0},(loginErr,loginDoc)=>{
 			 // console.log(loginDoc);

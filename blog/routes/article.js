@@ -6,12 +6,14 @@ var moment = require('moment');
 require('moment/locale/zh-cn')
 moment.locale('zh-cn'); 
 var Article = require('../models/article.js')
+var Tag = require('../models/tag.js')
 
 
 //获取文章
 router.get('/article', (req, res, next) => {
 	var page = req.query.page;
-	if(req.query.page){
+	var type = req.query.type;
+	if(type == 'get'){
 		const pageSize = 4;
 		page = (page - 1) * pageSize;
 		
@@ -34,7 +36,7 @@ router.get('/article', (req, res, next) => {
 				})
 			}
 		})
-	}else{
+	}else if(type == 'detail'){
 		//获取文章详情
 		var id = req.query.id;
 		Article.find({_id: id}, (err,data)=>{
@@ -52,9 +54,29 @@ router.get('/article', (req, res, next) => {
 				})
 			}
 		})
+	}else if(type == 'history'){
+		//获取所有文章
+		Article.find({},(allErr,allDoc)=>{
+			if(allDoc){
+				// console.log(res);
+				return res.json({
+					code: 0,
+						msg: '文章获取成功！',
+						result: allDoc,
+				})
+			}else{
+				return res.json({
+					code: 1,
+					msg: '文章获取失败！',
+					result: allErr,
+				})
+			}
+		})
 	}
 	
 })
+
+//后台管理
 
 //搜索文章
 router.get('/search',(req,res,next)=>{
@@ -121,6 +143,76 @@ router.get('/search',(req,res,next)=>{
 			}
 		})
 	}
+})
+
+//标签和分类管理
+
+router.post('/tag',(req,res)=>{
+	let tag = req.body;
+	// console.log(tag);
+	//标签和分类修改
+	if(tag._id){
+		Tag.update({ _id:tag._id },{$set:{ tagList:tag.tagList,categoryList:tag.categoryList}},(Uerr,Udoc)=>{
+			if(Udoc){
+				return res.json({
+					code:0,
+					msg:'修改分类成功!',
+					result:""
+				})
+			}else{
+				return res.json({
+					code:1,
+					msg:'修改分类失败!',
+					result:Uerr
+				})
+			}
+		});
+	}else{
+		let tagList = {
+			tagList:tag.tagList,
+			categoryList:tag.categoryList
+		};
+		Tag.create(tagList,(Terr,Tdoc)=>{
+		if(Tdoc){
+			return res.json({
+				code:0,
+				msg:'添加分类成功!',
+				result:""
+			})
+		}else{
+			return res.json({
+				code:1,
+				msg:'添加分类失败!',
+				result:Terr
+			})
+		}
+	});
+	}
+	
+	
+
+	
+
+
+})
+
+//标签和分类查询
+router.get('/tag',(req,res)=>{
+	Tag.find({},(Ferr,Fdoc)=>{
+		if(Fdoc){
+			return res.json({
+				code:0,
+				msg:'查询分类成功!',
+				result:Fdoc
+			})
+		}else{
+			return res.json({
+				code:1,
+				msg:'查询分类失败!',
+				result:Ferr
+			})
+		}
+	})
 })
 
 //发布文章

@@ -11,9 +11,10 @@ var Tag = require("../models/tag.js");
 //获取文章
 router.get("/article", (req, res, next) => {
   var page = req.query.page;
+  const pageSize = parseInt(req.query.num);
   var type = req.query.type;
   if (type == "get") {
-    const pageSize = 4;
+    // const pageSize = 4;
     page = (page - 1) * pageSize;
 
     Article.find({})
@@ -40,7 +41,9 @@ router.get("/article", (req, res, next) => {
   } else if (type == "detail") {
     //获取文章详情
     var id = req.query.id;
-    Article.find({ _id: id }, (err, data) => {
+    Article.find({
+      _id: id
+    }, (err, data) => {
       if (data) {
         res.json({
           code: 0,
@@ -82,13 +85,19 @@ router.get("/article", (req, res, next) => {
 router.get("/search", (req, res, next) => {
   let search = req.query;
   var title = urlencode.decode(search.title, "utf-8");
+  var category = urlencode.decode(search.category, "utf-8");
   var Title = new RegExp(title, "i"); //标题模糊查询
   console.log(title);
   let page = req.query.page;
-  const pageSize = 4;
+  const pageSize = parseInt(req.query.num);
   page = (page - 1) * pageSize;
   if (search.title && search.category) {
-    Article.find({ category: search.category, $or: [{ title: Title }] })
+    Article.find({
+        category: category,
+        $or: [{
+          title: Title
+        }]
+      })
       .skip(page)
       .limit(pageSize)
       .exec((allErr, allDoc) => {
@@ -110,7 +119,11 @@ router.get("/search", (req, res, next) => {
   }
   //标题搜索
   else if (search.title) {
-    Article.find({ $or: [{ title: Title }] })
+    Article.find({
+        $or: [{
+          title: Title
+        }]
+      })
       .skip(page)
       .limit(pageSize)
       .exec((allErr, allDoc) => {
@@ -132,7 +145,9 @@ router.get("/search", (req, res, next) => {
   }
   //分类搜索
   else if (search.category) {
-    Article.find({ category: search.category })
+    Article.find({
+        category: category
+      })
       .skip(page)
       .limit(pageSize)
       .exec((allErr, allDoc) => {
@@ -161,9 +176,14 @@ router.post("/tag", (req, res) => {
   // console.log(tag);
   //标签和分类修改
   if (tag._id) {
-    Tag.updateOne(
-      { _id: tag._id },
-      { $set: { tagList: tag.tagList, categoryList: tag.categoryList } },
+    Tag.updateOne({
+        _id: tag._id
+      }, {
+        $set: {
+          tagList: tag.tagList,
+          categoryList: tag.categoryList
+        }
+      },
       (Uerr, Udoc) => {
         if (Udoc) {
           return res.json({
@@ -212,7 +232,9 @@ router.get("/tag", (req, res) => {
       let categoryList = Fdoc[0].categoryList;
       let numArr = [];
       categoryList.forEach((item) => {
-        Article.find({ category: item }, (err, doc) => {
+        Article.find({
+          category: item
+        }, (err, doc) => {
           numArr.push(doc.length);
         });
       });
@@ -245,21 +267,21 @@ router.post("/publish", (req, res, next) => {
   article.reviewNum = 0;
   article.watchNum = 0;
   (article.updateTime = ""),
-    Article.create(article, (Aerr, doc) => {
-      if (Aerr) {
-        return res.json({
-          code: 0,
-          msg: "发表成功!",
-          result: "",
-        });
-      } else {
-        return res.json({
-          code: 1,
-          msg: "发表失败!",
-          result: Aerr,
-        });
-      }
-    });
+  Article.create(article, (Aerr, doc) => {
+    if (Aerr) {
+      return res.json({
+        code: 0,
+        msg: "发表成功!",
+        result: "",
+      });
+    } else {
+      return res.json({
+        code: 1,
+        msg: "发表失败!",
+        result: Aerr,
+      });
+    }
+  });
 });
 
 //编辑文章
@@ -267,9 +289,9 @@ router.post("/edit", (req, res, next) => {
   let article = req.body;
   var updateTime = moment().format("YYYY-MM-DD HH:mm:ss");
   article.updateTime = updateTime;
-  Article.updateOne(
-    { _id: article._id },
-    {
+  Article.updateOne({
+      _id: article._id
+    }, {
       $set: article,
     },
     (Eerr, doc) => {

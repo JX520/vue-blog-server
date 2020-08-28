@@ -86,11 +86,13 @@ router.get("/search", (req, res, next) => {
   let search = req.query;
   var title = urlencode.decode(search.title, "utf-8");
   var category = urlencode.decode(search.category, "utf-8");
+  var tag = urlencode.decode(search.tag, 'utf-8');
   var Title = new RegExp(title, "i"); //标题模糊查询
   console.log(title);
   let page = req.query.page;
   const pageSize = parseInt(req.query.num);
   page = (page - 1) * pageSize;
+  //标题和分类同时检索
   if (search.title && search.category) {
     Article.find({
         category: category,
@@ -102,14 +104,22 @@ router.get("/search", (req, res, next) => {
       .limit(pageSize)
       .exec((allErr, allDoc) => {
         if (allDoc) {
-          res.json({
-            code: 0,
-            msg: "搜索成功！",
-            result: allDoc,
-            count: allDoc.length,
+          Article.find({
+            category: category,
+            $or: [{
+              title: Title
+            }]
+          }).countDocuments().exec((err, count) => {
+            return res.json({
+              code: 0,
+              msg: "标题和分类搜索成功！",
+              result: allDoc,
+              count: count,
+            });
           });
+
         } else {
-          res.json({
+          return res.json({
             code: 1,
             msg: "暂无该文章！",
             result: allErr,
@@ -126,19 +136,25 @@ router.get("/search", (req, res, next) => {
       })
       .skip(page)
       .limit(pageSize)
-      .exec((allErr, allDoc) => {
-        if (allDoc) {
-          res.json({
-            code: 0,
-            msg: "搜索成功！",
-            result: allDoc,
-            count: allDoc.length,
+      .exec((titleErr, titleDoc) => {
+        if (titleDoc) {
+          Article.find({
+            $or: [{
+              title: Title
+            }]
+          }).countDocuments().exec((err, count) => {
+            return res.json({
+              code: 0,
+              msg: "标题搜索成功！",
+              result: titleDoc,
+              count: count,
+            });
           });
         } else {
-          res.json({
+          return res.json({
             code: 1,
             msg: "暂无该文章！",
-            result: allErr,
+            result: titleErr,
           });
         }
       });
@@ -150,19 +166,53 @@ router.get("/search", (req, res, next) => {
       })
       .skip(page)
       .limit(pageSize)
-      .exec((allErr, allDoc) => {
-        if (allDoc) {
-          res.json({
-            code: 0,
-            msg: "搜索成功！",
-            result: allDoc,
-            count: allDoc.length,
+      .exec((catErr, catDoc) => {
+        if (catDoc) {
+          Article.find({
+            category: category
+          }).countDocuments().exec((err, count) => {
+            return res.json({
+              code: 0,
+              msg: "分类搜索成功！",
+              result: catDoc,
+              count: count,
+            });
           });
+
         } else {
-          res.json({
+          return res.json({
             code: 1,
             msg: "暂无该文章！",
-            result: allErr,
+            result: catErr,
+          });
+        }
+      });
+  }
+  //标签搜索
+  else if (search.tag) {
+    Article.find({
+        lables: tag
+      })
+      .skip(page)
+      .limit(pageSize)
+      .exec((tagErr, tagDoc) => {
+        if (tagDoc) {
+          Article.find({
+            lables: tag
+          }).countDocuments().exec((err, count) => {
+            return res.json({
+              code: 0,
+              msg: "标签搜索成功！",
+              result: tagDoc,
+              count: count,
+            });
+          });
+
+        } else {
+          return res.json({
+            code: 1,
+            msg: "暂无该文章！",
+            result: tagErr,
           });
         }
       });
@@ -230,21 +280,32 @@ router.get("/tag", (req, res) => {
     if (Fdoc) {
       //   console.log(Fdoc);
       let categoryList = Fdoc[0].categoryList;
-      let numArr = [];
+      let tagList = Fdoc[0].tagList;
+      let catArr = [];
+      let tagArr = [];
       categoryList.forEach((item) => {
         Article.find({
           category: item
-        }, (err, doc) => {
-          numArr.push(doc.length);
+        }, (cerr, cdoc) => {
+          catArr.push(cdoc.length);
         });
+      });
+      tagList.forEach((item) => {
+        Article.find({
+          lables: item
+        }, (terr, tdoc) => {
+          tagArr.push(tdoc.length)
+        })
       });
       //   console.log(numArr);
       setTimeout(function () {
+        console.log(tagArr);
         return res.json({
           code: 0,
           msg: "查询分类成功!",
           result: Fdoc,
-          num: numArr,
+          num: catArr,
+          tnum: tagArr
         });
       }, 1000);
     } else {
@@ -260,7 +321,8 @@ router.get("/tag", (req, res) => {
 //发布文章
 router.post("/publish", (req, res, next) => {
   let article = req.body;
-  var publishTime = moment().format("YYYY-MM-DD HH:mm:ss");
+  // var publishTime = moment().format("YYYY-MM-DD HH:mm:ss");
+  var publishTime = moment().format("YYYY-MM-DD ");
   // console.log(publishTime);
   article.publishTime = publishTime;
   article.likeNum = 0;
@@ -287,7 +349,8 @@ router.post("/publish", (req, res, next) => {
 //编辑文章
 router.post("/edit", (req, res, next) => {
   let article = req.body;
-  var updateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+  // var updateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+  var updateTime = moment().format("YYYY-MM-DD");
   article.updateTime = updateTime;
   Article.updateOne({
       _id: article._id
